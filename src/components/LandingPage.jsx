@@ -1,11 +1,216 @@
 // import { Button } from "@/components/ui/button";
-import Button from "./ui/Button";
+import Button from '../components/ui/Button'
 import { motion, useScroll, useTransform } from "framer-motion";
-import { FiMail as Mail, FiInstagram as Instagram, FiClock as Clock, FiHeart as Heart, FiShoppingBag as ShoppingBag, FiChevronRight as ChevronRight, FiArrowRight as ArrowRight } from "react-icons/fi";
-import { useRef } from "react";
+import { 
+  FiMail as Mail, 
+  FiInstagram as Instagram, 
+  FiClock as Clock, 
+  FiHeart as Heart, 
+  FiShoppingBag as ShoppingBag, 
+  FiChevronRight as ChevronRight, 
+  FiArrowRight as ArrowRight,
+  FiMenu as Menu,
+  FiX as Close
+} from "react-icons/fi";
+import { useRef, useState, useEffect } from "react";
 import { MdAutoAwesome as Sparkles } from "react-icons/md";
 
+// Modal Component
+const Modal = ({ isOpen, onClose, children }) => {
+  if (!isOpen) return null;
 
+  return (
+    <motion.div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div 
+        className="bg-white rounded-2xl p-8 max-w-md w-full mx-4 relative"
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+      >
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 text-black/50 hover:text-black"
+        >
+          <Close className="h-5 w-5" />
+        </button>
+        {children}
+      </motion.div>
+    </motion.div>
+  );
+};
+
+// Countdown Timer Component
+const CountdownTimer = () => {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 4,
+    hours: 0,
+    minutes: 0,
+    seconds: 1
+  });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTimeLeft(prev => {
+        const { days, hours, minutes, seconds } = prev;
+        
+        if (seconds > 0) return { ...prev, seconds: seconds - 1 };
+        if (minutes > 0) return { ...prev, minutes: minutes - 1, seconds: 59 };
+        if (hours > 0) return { ...prev, hours: hours - 1, minutes: 59, seconds: 59 };
+        if (days > 0) return { days: days - 1, hours: 23, minutes: 59, seconds: 59 };
+        
+        clearInterval(timer);
+        return { days: 0, hours: 0, minutes: 0, seconds: 0 };
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div className="flex justify-center gap-4 md:gap-8">
+      {[
+        { value: timeLeft.days.toString().padStart(2, '0'), label: "Days" },
+        { value: timeLeft.hours.toString().padStart(2, '0'), label: "Hours" },
+        { value: timeLeft.minutes.toString().padStart(2, '0'), label: "Minutes" },
+        { value: timeLeft.seconds.toString().padStart(2, '0'), label: "Seconds" }
+      ].map((item, index) => (
+        <motion.div
+          key={index}
+          className="flex flex-col items-center"
+          initial={{ scale: 0.8, opacity: 0 }}
+          whileInView={{ scale: 1, opacity: 1 }}
+          transition={{ delay: index * 0.1, duration: 0.5 }}
+          viewport={{ once: true }}
+        >
+          <motion.div 
+            className="text-4xl md:text-6xl font-bold mb-2"
+            key={item.value}
+            initial={{ y: -10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+          >
+            {item.value}
+          </motion.div>
+          <div className="text-sm uppercase tracking-wider opacity-70">{item.label}</div>
+        </motion.div>
+      ))}
+    </div>
+  );
+};
+
+const Navbar = () => {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 50);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const navItems = [
+    { name: "About", id: "about" },
+    { name: "Collection", id: "collection" },
+    { name: "Testimonials", id: "testimonials" },
+    { name: "Waitlist", id: "waitlist" }
+  ];
+
+  const scrollToSection = (id) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth' });
+      setIsMenuOpen(false);
+    }
+  };
+
+  return (
+    <header className={`fixed w-full z-50 transition-all duration-300 ${scrolled ? 'bg-white/90 backdrop-blur-md shadow-sm' : 'bg-transparent'}`}>
+      <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+        <motion.a 
+          href="#" 
+          className="text-2xl font-bold"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          Wamzé
+        </motion.a>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center gap-8">
+          {navItems.map((item, index) => (
+            <motion.button
+              key={index}
+              className="text-black/80 hover:text-black transition-colors text-sm font-medium uppercase tracking-wider"
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 + 0.3, duration: 0.5 }}
+              onClick={() => scrollToSection(item.id)}
+            >
+              {item.name}
+            </motion.button>
+          ))}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: navItems.length * 0.1 + 0.3, duration: 0.5 }}
+          >
+            <Button 
+              className="bg-black text-white hover:bg-black/90 rounded-full"
+              onClick={() => scrollToSection('waitlist')}
+            >
+              Join Waitlist
+            </Button>
+          </motion.div>
+        </nav>
+
+        {/* Mobile Menu Button */}
+        <button 
+          className="md:hidden p-2"
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+        >
+          {isMenuOpen ? <Close className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+        </button>
+      </div>
+
+      {/* Mobile Menu */}
+      {isMenuOpen && (
+        <motion.div 
+          className="md:hidden bg-white/95 backdrop-blur-lg w-full absolute top-full left-0 px-6 py-4 shadow-lg"
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex flex-col gap-4">
+            {navItems.map((item, index) => (
+              <button
+                key={index}
+                className="text-black/80 hover:text-black transition-colors text-sm font-medium uppercase tracking-wider py-2 text-left"
+                onClick={() => scrollToSection(item.id)}
+              >
+                {item.name}
+              </button>
+            ))}
+            <Button 
+              className="bg-black text-white hover:bg-black/90 rounded-full w-full mt-2"
+              onClick={() => scrollToSection('waitlist')}
+            >
+              Join Waitlist
+            </Button>
+          </div>
+        </motion.div>
+      )}
+    </header>
+  );
+};
 
 export default function LandingPage() {
   const ref = useRef(null);
@@ -16,10 +221,87 @@ export default function LandingPage() {
   const backgroundY = useTransform(scrollYProgress, [0, 1], ["0%", "100%"]);
   const textY = useTransform(scrollYProgress, [0, 1], ["0%", "200%"]);
 
+  // Modal states
+  const [notifyModalOpen, setNotifyModalOpen] = useState(false);
+  const [waitlistModalOpen, setWaitlistModalOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Here you would typically send the email to your backend
+    console.log("Submitted email:", email);
+    setSubmitted(true);
+    setTimeout(() => {
+      setSubmitted(false);
+      setNotifyModalOpen(false);
+      setWaitlistModalOpen(false);
+      setEmail("");
+    }, 2000);
+  };
+
   return (
     <main className="min-h-screen bg-[#fef9f6] text-black font-sans overflow-x-hidden" ref={ref}>
+      <Navbar />
+
+      {/* Notification Modal */}
+      <Modal isOpen={notifyModalOpen} onClose={() => setNotifyModalOpen(false)}>
+        <div className="text-center">
+          <Sparkles className="h-12 w-12 mx-auto mb-4 text-[#f4e4dd]" />
+          <h3 className="text-2xl font-bold mb-2">Get Notified</h3>
+          <p className="text-black/70 mb-6">
+            Be the first to know when we launch new products and exclusive offers.
+          </p>
+          {submitted ? (
+            <div className="py-4 text-green-600">Thank you! We'll notify you soon.</div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-lg border border-black/20 focus:outline-none focus:ring-2 focus:ring-black"
+                required
+              />
+              <Button type="submit" className="w-full bg-black text-white hover:bg-black/90">
+                Notify Me
+              </Button>
+            </form>
+          )}
+        </div>
+      </Modal>
+
+      {/* Waitlist Modal */}
+      <Modal isOpen={waitlistModalOpen} onClose={() => setWaitlistModalOpen(false)}>
+        <div className="text-center">
+          <Mail className="h-12 w-12 mx-auto mb-4 text-[#f4e4dd]" />
+          <h3 className="text-2xl font-bold mb-2">Join Our Waitlist</h3>
+          <p className="text-black/70 mb-6">
+            Get early access to our collections and exclusive member benefits.
+          </p>
+          {submitted ? (
+            <div className="py-4 text-green-600">Thank you for joining our waitlist!</div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                className="w-full px-4 py-3 rounded-lg border border-black/20 focus:outline-none focus:ring-2 focus:ring-black"
+                required
+              />
+              <Button type="submit" className="w-full bg-black text-white hover:bg-black/90">
+                Join Waitlist
+              </Button>
+            </form>
+          )}
+        </div>
+      </Modal>
+
       {/* Hero Section */}
-      <section className="relative h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden">
+      <section className="relative h-screen flex flex-col items-center justify-center text-center px-6 overflow-hidden pt-16">
         <motion.div 
           className="absolute inset-0 bg-[#f4e4dd] z-0"
           style={{
@@ -56,7 +338,10 @@ export default function LandingPage() {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Button className="bg-black text-white hover:bg-black/90 text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group">
+            <Button 
+              className="bg-black text-white hover:bg-black/90 text-lg px-8 py-6 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 group"
+              onClick={() => setNotifyModalOpen(true)}
+            >
               <Sparkles className="mr-2 h-5 w-5 group-hover:rotate-12 transition-transform" />
               Get Notified
               <ChevronRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -81,7 +366,7 @@ export default function LandingPage() {
       </section>
 
       {/* About Section */}
-      <section className="py-24 px-6 text-center max-w-5xl mx-auto">
+      <section id="about" className="py-24 px-6 text-center max-w-5xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -134,7 +419,7 @@ export default function LandingPage() {
       </section>
 
       {/* Lookbook Section */}
-      <section className="py-24 bg-[#f4e4dd]">
+      <section id="collection" className="py-24 bg-[#f4e4dd]">
         <div className="max-w-7xl mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -191,31 +476,12 @@ export default function LandingPage() {
             Our flagship store opens in just a few days. Be the first to experience Wamzé in person.
           </p>
           
-          <div className="flex justify-center gap-4 md:gap-8">
-            {[
-              { value: "10", label: "Days" },
-              { value: "05", label: "Hours" },
-              { value: "22", label: "Minutes" },
-              { value: "18", label: "Seconds" }
-            ].map((item, index) => (
-              <motion.div
-                key={index}
-                className="flex flex-col items-center"
-                initial={{ scale: 0.8, opacity: 0 }}
-                whileInView={{ scale: 1, opacity: 1 }}
-                transition={{ delay: index * 0.1, duration: 0.5 }}
-                viewport={{ once: true }}
-              >
-                <div className="text-4xl md:text-6xl font-bold mb-2">{item.value}</div>
-                <div className="text-sm uppercase tracking-wider opacity-70">{item.label}</div>
-              </motion.div>
-            ))}
-          </div>
+          <CountdownTimer />
         </motion.div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-24 px-6 max-w-7xl mx-auto">
+      <section id="testimonials" className="py-24 px-6 max-w-7xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 50 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -268,7 +534,7 @@ export default function LandingPage() {
       </section>
 
       {/* Waitlist Section */}
-      <section className="py-24 px-6 text-center bg-[#f4e4dd]">
+      <section id="waitlist" className="py-24 px-6 text-center bg-[#f4e4dd]">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
@@ -281,21 +547,13 @@ export default function LandingPage() {
             Be the first to access new collections, exclusive offers, and early sales.
           </p>
           
-          <form className="flex flex-col md:flex-row items-center justify-center gap-4">
-            <motion.div whileHover={{ scale: 1.02 }} className="w-full max-w-md">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="px-6 py-4 rounded-full border border-black/20 focus:outline-none focus:ring-2 focus:ring-black w-full text-lg"
-              />
-            </motion.div>
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-              <Button className="bg-black text-white hover:bg-black/90 px-8 py-4 rounded-full text-lg">
-                <Mail className="mr-2 h-5 w-5" />
-                Join Waitlist
-              </Button>
-            </motion.div>
-          </form>
+          <Button 
+            className="bg-black text-white hover:bg-black/90 px-8 py-4 rounded-full text-lg"
+            onClick={() => setWaitlistModalOpen(true)}
+          >
+            <Mail className="mr-2 h-5 w-5" />
+            Join Waitlist
+          </Button>
         </motion.div>
       </section>
 
@@ -370,6 +628,7 @@ export default function LandingPage() {
               <li><a href="#" className="hover:text-white transition-colors">Bestsellers</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Collections</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Accessories</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Gift Cards</a></li>
             </ul>
           </div>
 
@@ -380,16 +639,18 @@ export default function LandingPage() {
               <li><a href="#" className="hover:text-white transition-colors">Sustainability</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Journal</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Press</a></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="text-sm font-medium text-white mb-4 uppercase tracking-wider">Help</h4>
+            <h4 className="text-sm font-medium text-white mb-4 uppercase tracking-wider">Customer Care</h4>
             <ul className="space-y-2">
               <li><a href="#" className="hover:text-white transition-colors">Contact Us</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Shipping</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Returns</a></li>
               <li><a href="#" className="hover:text-white transition-colors">FAQ</a></li>
+              <li><a href="#" className="hover:text-white transition-colors">Size Guide</a></li>
             </ul>
           </div>
         </div>
@@ -400,6 +661,7 @@ export default function LandingPage() {
             <div className="flex gap-6 mt-4 md:mt-0">
               <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
+              <a href="#" className="hover:text-white transition-colors">Accessibility</a>
             </div>
           </div>
         </div>
